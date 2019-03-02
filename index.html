@@ -9,14 +9,23 @@
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
 		mce.module({
-			dialog: "./src/modules/dialog.js",
-			alert: "./src/modules/alert.js",
-			test: "./src/modules/test.js"
+			dialog: "./src/modules/dialog",
+			alert: "./src/modules/alert",
+			test: "./src/modules/test",
+			error: "error"
 		});
+		
+		mce.config({
+			maxLoadTotal: 300,
+			pollLoadTime: 3,
+			defaultLoadExt: "js"
+		});
+		
 		mce.use(['dialog'],function () {
 			this.dialog.alert("dialog complete");
 		});
-		mce.use('test',function () {
+
+		mce.use('error',function () {
 
 		},function (app) {
 			console.log(app.module.name + " 模块加载错误 共尝试 " + app.total + " 次 " + app.module.status)

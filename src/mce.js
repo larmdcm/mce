@@ -3,7 +3,8 @@
 	
 	var VERSION = '1.0',modules = {},config = {
 			maxLoadTotal: 1000,
-			pollLoadTime: 3
+			pollLoadTime: 3,
+			defaultLoadExt: "js"
 		}
 		 // 是否为undefined
 		, isUndefined = function (ufe) {
@@ -86,6 +87,14 @@
 				}
 			}
 	})();
+	
+	Mce.prototype.config = function (configs) {
+		if (!isObject) error("mce.module","module is not object");
+		for (var i in configs) {
+			config[i] = configs[i];
+		}
+		return this;
+	};
 
 	Mce.prototype.module = function (module) {
 		if (!isObject) error("mce.module","module is not object");
@@ -111,10 +120,10 @@
 		  , self    = this
 		  , apps 	= [];
 		module.forEach(function (module) {
-			if (!self[module] && !isUndefined(module)) {
+			if (!self[module] && !isUndefined(module) && modules[module]) {
 				apps.push({
 					total: 0,
-					module: Module.create(module,modules[module]).load()
+					module: Module.create(module,modules[module] + ".js").load()
 				});
 			}
 		});

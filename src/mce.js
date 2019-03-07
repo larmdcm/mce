@@ -1,13 +1,21 @@
+/**
+ * Author: Mdcm
+ * Data: 2019.3.3
+ * Remark: To write JS code More Succinctly and Efficiently
+ */
 
 ;(function (win,doc) {
-	
-	var VERSION = '1.0',modules = {},config = {
+
+	var VERSION = '1.0',config = {
 			maxLoadTotal: 1000,
 			pollLoadTime: 3,
 			defaultLoadExt: "js"
 		}
+		,modules = {
+			tpl: "modules/tpl"
+		}
 		 // 是否为undefined
-		, isUndefined = function (ufe) {
+		, isUfe = function (ufe) {
 		  	  return typeof ufe == 'undefined' || ufe === undefined;
 		}
 		// 是否为数组
@@ -35,7 +43,7 @@
 		// 是否为空
 		, isEmpty = function (instance) {
 			return isString(instance) ? instance.replace(/(^s*)|(s*$)/g, "").length == 0 
-			  		 : isUndefined(instance) || instance == null;
+			  		 : isUfe(instance) || instance == null;
 		}
 		// 是否为整数
 		, isInteger = function (integer) {
@@ -49,12 +57,36 @@
 		, isBoolean = function (bool) {
 		  	 return typeof bool == 'boolean';
 		}
+		, getBasePath = function () {
+			var scripts  = [].slice.call(document.scripts).filter(function (script) {
+			  	  var src = script.src;
+			  	  return src.indexOf("mce") !== -1;
+			  })
+			  , path = scripts.length <= 0 ? "" : scripts[0].src;
+			  return path.substring(0, path.lastIndexOf('/') + 1);
+		}
 		, error = function (method,message) {
 			 var error = "Mce: " + "[" + method +"] to " + message;
 		  	 throw new Error(error);
 		}
+		, merge = function (newObj,oldObj) {
+			for (var k in newObj) {
+				oldObj[k] = newObj[k];
+			}
+			return oldObj;
+		}
 		, Mce = function () {
-			this.version = VERSION;
+			this.version  = VERSION;
+			this.toolFn   = {
+				isObject: isObject,
+				isUfe: isUfe,
+				isFunction: isFunction,
+				isArray: isArray,
+				isString: isString,
+				isInteger: isInteger,
+				merge: merge,
+				error: error
+			};
 		}
 		, Module = (function () {
 
@@ -120,10 +152,11 @@
 		  , self    = this
 		  , apps 	= [];
 		module.forEach(function (module) {
-			if (!self[module] && !isUndefined(module) && modules[module]) {
+			if (!self[module] && !isUfe(module) && modules[module]) {
+				var src = getBasePath() + modules[module] + ".js";
 				apps.push({
 					total: 0,
-					module: Module.create(module,modules[module] + ".js").load()
+					module: Module.create(module,src).load()
 				});
 			}
 		});

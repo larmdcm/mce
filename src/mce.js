@@ -12,7 +12,8 @@
 			defaultLoadExt: "js"
 		}
 		,modules = {
-			tpl: "modules/tpl"
+			tpl: "modules/tpl",
+			request: "modules/request",
 		}
 		 // 是否为undefined
 		, isUfe = function (ufe) {
@@ -41,9 +42,23 @@
 		  	 return object != null && typeof object == 'object';
 		}
 		// 是否为空
-		, isEmpty = function (instance) {
-			return isString(instance) ? instance.replace(/(^s*)|(s*$)/g, "").length == 0 
-			  		 : isUfe(instance) || instance == null;
+		, isEmpty = function (value) {
+			if (isUfe(value)) {
+				return false;
+			}
+			if (isString(value)) {
+				return value.trim().length > 0;
+			}
+			if (isObject(value)) {
+				for (var key in value) {
+					return true;
+				}
+				return false;
+			}
+			if (isArray(value)) {
+				return value.length > 0;
+			}
+			return true;
 		}
 		// 是否为整数
 		, isInteger = function (integer) {
@@ -131,14 +146,16 @@
 		return this;
 	};
 
-	Mce.prototype.define = function(name,resolve,deeps,reject) {
+	Mce.prototype.define = function(resolve,deeps,reject) {
 		var deeps = isArray(deeps) ? deeps : [deeps]
 		 ,  self  = this;
 
 		self.use(deeps,function () {
-			if (!self[name]) {
-				self[name] = resolve.call(self,self);
-			}
+			resolve.call(self,function (name,module) {
+				if (!self[name]) {
+					self[name] = module;
+				}
+			});
 		},reject);
 	};
 

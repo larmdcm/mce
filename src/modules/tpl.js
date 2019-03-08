@@ -4,7 +4,7 @@
  *  remark:js模板引擎
  */
 
-mce.define("tpl",function () {
+mce.define(function (exports) {
 	"use strict";
 	var VERSION = '1.0'
 	  , toolFn  = this.toolFn
@@ -277,5 +277,5 @@ mce.define("tpl",function () {
 	  	  	  }
 	  	  });
 	  };
-	return new Tpl;
+	 return exports('tpl',new Tpl)
 });

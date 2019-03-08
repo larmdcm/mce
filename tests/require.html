@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>ModuleJs</title>
+</head>
+<body>
+	
+	<script type="text/javascript" src="../src/mce.js"></script>
+	<script type="text/javascript">
+		mce.module({
+			dialog: "./modules/dialog",
+			alert: "./modules/alert",
+			test: "./modules/test",
+			error: "error"
+		});
+		
+		mce.config({
+			maxLoadTotal: 300,
+			pollLoadTime: 3,
+			defaultLoadExt: "js"
+		});
+		
+		mce.use(['dialog'],function () {
+			this.dialog.alert("dialog complete");
+		});
+
+		mce.use('error',function () {
+
+		},function (app) {
+			console.log(app.module.name + " 模块加载错误 共尝试 " + app.total + " 次 " + app.module.status)
+		});
+	</script>
+</body>
+</html>

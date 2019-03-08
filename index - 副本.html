@@ -6,10 +6,7 @@
 </head>
 <body>
 	<div id="app">
-
-	</div>
-	<template id="tpl">
-		 	<p>{{ message }} test</p>
+		<p>{{ message }} test</p>
 		<p m-text="html"></p>
 		<p m-html="html"></p>
 		<hr>
@@ -49,13 +46,13 @@
 		<div m-if="isShow">m-if true 2 {{ message }}</div>
 		<div m-else>m-if false 2 {{ message }}</div>
 		<div m-show="isShow">m-show 显示 {{ message }}</div>
-	</template>
+	</div>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
 		mce.use("tpl",function () {
 			 var tpl = this.tpl;
-			 var node = tpl.render({
-			 	el: "#tpl",
+			 tpl.render({
+			 	el: "#app",
 			 	data: {
 			 		isShow: false,
 			 		message: "Hello",
@@ -87,10 +84,6 @@
 			 		}
 			 	}
 			 });
-			 var app = document.querySelector("#app");
-			 node.id = "app";
-			 // document.querySelector("#app").appendChild(node);
-			 app.parentNode.replaceChild(node,app);
 		});
 	</script>
 </body>

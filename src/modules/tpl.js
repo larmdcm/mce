@@ -1,12 +1,22 @@
+/**
+ *  author: mdcm
+ *  date:2019.3.8
+ *  remark:js模板引擎
+ */
 
 mce.define("tpl",function () {
+	"use strict";
 	var VERSION = '1.0'
 	  , toolFn  = this.toolFn
 	  , Tpl = function () {
 	  	  this.version = VERSION;
 	  	  this.el 		= {};
-	  	  this.data 	= {};
+	  	  this.data 	= {
+	  	  	"true": true,
+	  	  	"false": false
+	  	  };
 	  	  this.methods 	= {};
+	  	  this.filters  = {};
 	  	  this.leftTag  = '{{';
 	  	  this.rightTag = '}}';
 	  }
@@ -18,43 +28,54 @@ mce.define("tpl",function () {
 	  	 bind: tplDirectiveStart + "bind",
 	  	 on: tplDirectiveStart + "on"
 	  }
-	  , tplUtil = {
+	  , ifResult = []
+	  , tplUtil  = {
 	  	replaceElement: function (el,fragment) {
 	  		var parent = el.parentNode;
 	  		parent && parent.replaceChild(fragment,el)
 	  	},
-	  	getData: function (key,data,el) {
-	  		var value;
-	  		if (key.indexOf(".") !== -1) {
-	  			var keys = key.split(".")
-	  			  , tKey = keys.shift();
-	  			return tplUtil.getData(keys.join('.'),data[tKey],el)
-	  		} else {
-	  			value = data[key];
-	  		}
-	  		if (toolFn.isUfe(value)) {
-	  			return compileError("mce.tpl.var","compile error template var " + key + " is undefined",el);
-	  		}
-	  		return data[key];
+	  	getData: function (exp,data,el) {
+	  		 exp = " " + exp.trim();
+			 var self = this
+			   , reg  = /([\s\+\-\*\/%&\|\^!\*~]\s*?)([a-zA-Z_$][a-zA-Z_$0-9]*?)/g
+			   , result
+			   , filters = [];
+			 if (exp.indexOf("|") !== -1) {
+			 	filters = exp.split("|");
+			 	exp = filters.shift();
+			 }
+			 exp = exp.replace(reg,function (a,b,c) {
+			 	return b + "data." + c;
+			 });
+			 result = new Function("data", "return " + exp).call(self,data);
+			 if (filters.length > 0) {
+			 	filters.forEach(function (filter) {
+			 		filter = filter.trim();
+			 		var filterFn = self.filters[filter];
+			 		result = toolFn.isFunction(filterFn) ? filterFn.call(self,result) : 
+			 				 compileError("mce.tpl.filters",filter + " filter is not a function");
+			 	});
+			 }
+			 return result;
 	  	}
 	  }
 	  , tplDirectiveHandles = {
 	  	html: function (el,data,value,name) {
-	  		el.innerHTML = tplUtil.getData(value,data,el);
+	  		el.innerHTML = tplUtil.getData.call(this,value,data,el);
 	  		el.removeAttribute(name);
 	  	},
 	  	text: function (el,data,value,name) {
-	  		el.textContent = tplUtil.getData(value,data,el);
+	  		el.textContent = tplUtil.getData.call(this,value,data,el);
 	  		el.removeAttribute(name);
 	  	},
 	  	bind: function (el,data,value,name) {
 	  		var attrs = name.split(":")
 	  		  , attr;
 	  		if (attrs.length <= 1) {
-	  			return compileError("mce.tpl.bind","for compile error "+ tplDirectives.bind + ":key bind key is error",el);
+	  			return compileError("mce.tpl.bind","for compile error ["+ tplDirectives.bind + "]:key bind key is error",el);
 	  		}
 	  		attr = attrs[1];
-	  		el.setAttribute(attr,tplUtil.getData(value,data,el));
+	  		el.setAttribute(attr,tplUtil.getData.call(this,value,data,el));
 	  		el.removeAttribute(name);
 
 	  	},
@@ -62,18 +83,40 @@ mce.define("tpl",function () {
 	  		var attrs = name.indexOf(":") != -1 ? name.split(":") : name.split("@")
 	  		  , attr;
 	  		if (attrs.length <= 1) {
-	  			return compileError("mce.tpl.on","for compile error "+ tplDirectives.on + ":event on event is error",el);
+	  			return compileError("mce.tpl.on","for compile error ["+ tplDirectives.on + "]:event on event is error",el);
 	  		}
 	  		event = attrs[1];
 	  		el.addEventListener(event,this.methods[value] && toolFn.isFunction(this.methods[value]) && this.methods[value].bind(this),false);
 	  		el.removeAttribute(name);
+	  	},
+	  	if: function (el,data,value,name) {
+	  		var result = tplUtil.getData.call(this,value,data,el)
+	  		  , parent = el.parentNode;
+	  		!result && parent && parent.removeChild(el);
+	  		ifResult.push(result);
+	  		el.removeAttribute(name);
+	  	},
+	  	else: function (el,data,value,name) {
+	  		var parent = el.parentNode;
+	  		if (ifResult.length <= 0) {
+	  			return compileError("mce.tpl.else","else not a if",el);
+	  		}
+	  		ifResult.shift() && parent && parent.removeChild(el);
+	  		el.removeAttribute(name);
+	  	},
+	  	show: function (el,data,value,name) {
+	  		var result = tplUtil.getData.call(this,value,data,el)
+	  		  , parent = el.parentNode;
+	  		if (!result && parent) {
+	  			el.style.display = 'none';
+	  		}
 	  	},
 	  	for: function (el,data,value) {
 	  		var self	  = this
 	  		  , fragment  = document.createDocumentFragment()
 	  		  , reg       = /(\((\w+),(\w+)\)|(\w+))\s?in\s?(\w+)/
 	  		  , matchs;
-	  		if (!value.match(reg)) return compileError("mce.tpl.for","for compile error "+ tplDirectives.for +"=" + '"' + value + '"',el);
+	  		if (!value.match(reg)) return compileError("mce.tpl.for","for compile error ["+ tplDirectives.for +"=" + '"' + value + '"]',el);
 
 	  		matchs = reg.exec(value);
 	  		if (matchs.length >= 6 && matchs[5]) {
@@ -105,7 +148,6 @@ mce.define("tpl",function () {
 	  }
 	  , compileError = function (method,message,element) {
 	  	 var template = "";
-	  	 console.log(element.innerHTML);
 	  	 if (element) {
 	  	 	template = element.parentNode ? element.parentNode.innerHTML || element.parentNode.textContent : element.innerHTML || element.textContent;
 	  	 	message  = message + "\r\ntemplate: \r\n " + template;
@@ -117,13 +159,21 @@ mce.define("tpl",function () {
 	  }
 	  , isEventDirective = function (attr) {
 	  	 return attr.substr(0,1) == '@';
+	  }
+	  , createElement = function (html) {
+	  	 var element = document.createElement("div");
+	  	 element.innerHTML = html;
+	  	 return element;
 	  };
 
 	  Tpl.prototype.render = function(options) {
-	  	 this.el 	  = toolFn.isString(options.el) ? document.querySelector(options.el) : options.el;
-	  	 this.data 	  = options.data || {};
+	  	 this.el 	  = options.content ? createElement(options.document) : createElement((toolFn.isString(options.el) 
+	  	 								 ? document.querySelector(options.el) : options.el).innerHTML);
+	  	 this.data 	  = toolFn.merge(options.data || {},this.data);
 	  	 this.methods = options.methods || {};
+	  	 this.filters = toolFn.merge(options.filters || {},this.filters);
 	  	 this.__compile(this.el,this.data);
+	  	 return this.el;
 	  };
 
 	  Tpl.prototype.__compile = function(el,data) {
@@ -150,7 +200,7 @@ mce.define("tpl",function () {
 	  	    , lastIndex = 0
 	  	    , element
 	  	    , fragment  = document.createDocumentFragment();
-	  	  if (!content.match(content)) return;
+	  	  if (!content.match(reg)) return;
 	      while(match = reg.exec(content)){
             if(match.index > lastIndex){
                 //普通文本
@@ -162,7 +212,7 @@ mce.define("tpl",function () {
             //占位符
             var exp = match[1].trim();
             element = document.createTextNode(' ');
-            element.textContent = tplUtil.getData(exp,data,element);
+            element.textContent = tplUtil.getData.call(this,exp,data,element);
             fragment.appendChild(element);
         }
         if(lastIndex < content.length){

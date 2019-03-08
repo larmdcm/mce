@@ -1,11 +1,11 @@
 /**
- * Author: Mdcm
+ * Author: mdcm
  * Data: 2019.3.3
  * Remark: To write JS code More Succinctly and Efficiently
  */
 
 ;(function (win,doc) {
-
+	"use strict";
 	var VERSION = '1.0',config = {
 			maxLoadTotal: 1000,
 			pollLoadTime: 3,

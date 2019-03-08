@@ -6,7 +6,10 @@
 </head>
 <body>
 	<div id="app">
-		<p>{{ message }} test</p>
+
+	</div>
+	<template id="tpl">
+		 	<p>{{ message }} test</p>
 		<p m-text="html"></p>
 		<p m-html="html"></p>
 		<hr>
@@ -46,13 +49,21 @@
 		<div m-if="isShow">m-if true 2 {{ message }}</div>
 		<div m-else>m-if false 2 {{ message }}</div>
 		<div m-show="isShow">m-show 显示 {{ message }}</div>
-	</div>
-	<script type="text/javascript" src="./src/mce.js"></script>
+	</template>
+	<script type="text/javascript" src="../src/mce.js"></script>
 	<script type="text/javascript">
 		mce.use("tpl",function () {
-			 var tpl = this.tpl;
-			 tpl.render({
-			 	el: "#app",
+			 var tpl  = this.tpl
+			   , node = tpl.render({
+			 	el: "#tpl",
+			   	id: "app",
+			 	class: "tpl test",
+			 	renderNode: "#app",
+			 	config: {
+			 		openTag: "{{",
+			 		closeTag: "}}"
+			 	},
+			 	// appendNode: "#app",
 			 	data: {
 			 		isShow: false,
 			 		message: "Hello",
@@ -84,6 +95,7 @@
 			 		}
 			 	}
 			 });
+			console.log(node);
 		});
 	</script>
 </body>

@@ -9,9 +9,6 @@
 	<script type="text/javascript" src="../src/mce.js"></script>
 	<script type="text/javascript">
 		mce.module({
-			dialog: "./modules/dialog",
-			alert: "./modules/alert",
-			test: "./modules/test",
 			error: "error"
 		});
 		
@@ -21,8 +18,8 @@
 			defaultLoadExt: "js"
 		});
 		
-		mce.use(['dialog'],function () {
-			this.dialog.alert("dialog complete");
+		mce.use(['tpl'],function () {
+			console.log(this.tpl);
 		});
 
 		mce.use('error',function () {

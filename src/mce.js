@@ -70,6 +70,7 @@
 		  	 throw new Error(error);
 		}
 		, merge = function (newObj,oldObj) {
+			(!isObject(newObj) || !isObject(oldObj)) && error("mce.merge","merge object error newObj or oldObj not is a object");
 			for (var k in newObj) {
 				oldObj[k] = newObj[k];
 			}
@@ -121,18 +122,12 @@
 	})();
 	
 	Mce.prototype.config = function (configs) {
-		if (!isObject) error("mce.module","module is not object");
-		for (var i in configs) {
-			config[i] = configs[i];
-		}
+		config = merge(configs,config);
 		return this;
 	};
 
 	Mce.prototype.module = function (module) {
-		if (!isObject) error("mce.module","module is not object");
-		for (var i in module) {
-			modules[i] = module[i];
-		}
+		modules = merge(module,modules);
 		return this;
 	};
 

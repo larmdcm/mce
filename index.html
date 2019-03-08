@@ -8,89 +8,10 @@
 	<div id="app">
 
 	</div>
-	<template id="tpl">
-		 	<p>{{ message }} test</p>
-		<p m-text="html"></p>
-		<p m-html="html"></p>
-		<hr>
-		<div>
-			<ul>
-				<li m-for="(item,index) in items">{{ index + "---test"}} --- {{ item }}</li>
-				<li>{{ message | toUpper }} --- test</li>
-			</ul>
-		</div>
-		<hr>
-		<div m-for="item in items">{{ item }}</div>
-		<hr>
-		<div>
-			<ul>
-				<li m-for="(v,k) in items" m-bind:key="k">{{ v }} --- {{ message }}</li>
-				<li>{{ message }}</li>
-			</ul>
-		</div>
-		<hr>
-		<div>
-			<ul>
-				<li m-for="(v,k) in items" m-bind:key="k" m-html="v"></li>
-				<li>{{ message }}</li>
-			</ul>
-		</div>
-		<hr>
-		<div>
-			<ul>
-				<li m-for="(v,k) in list" :key="k">{{ v['title'] }} --- {{ v.desc }}</li>
-			</ul>
-		</div>
-		<hr>
-		<button @click="print">执行</button>
-		<hr>
-		<div m-if="true">m-if true 1 {{ message }}</div>
-		<div m-else>m-if false 1 {{ message }}</div>
-		<div m-if="isShow">m-if true 2 {{ message }}</div>
-		<div m-else>m-if false 2 {{ message }}</div>
-		<div m-show="isShow">m-show 显示 {{ message }}</div>
-	</template>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
 		mce.use("tpl",function () {
-			 var tpl = this.tpl;
-			 var node = tpl.render({
-			 	el: "#tpl",
-			 	data: {
-			 		isShow: false,
-			 		message: "Hello",
-			 		html: "<span>test</span>",
-			 		items: [
-			 			1,
-			 			2,
-			 			3
-			 		],
-			 		list: [
-			 		   {
-			 		   		title: "神级天才",
-			 		   		desc: "神级天才"
-			 		   },
-			 		   {
-			 		   	   title: "龙王传说",
-			 		   	   desc: "龙王传说"
-			 		   }
-			 		]
-			 	},
-			 	methods: {
-			 		print: function () {
-			 			console.log(this.data.message);
-			 		}
-			 	},
-			 	filters: {
-			 		toUpper: function (value) {
-			 			return value.toUpperCase();
-			 		}
-			 	}
-			 });
-			 var app = document.querySelector("#app");
-			 node.id = "app";
-			 // document.querySelector("#app").appendChild(node);
-			 app.parentNode.replaceChild(node,app);
+			
 		});
 	</script>
 </body>

@@ -1,0 +1,4 @@
+
+mce.define(function (exports) {
+
+});

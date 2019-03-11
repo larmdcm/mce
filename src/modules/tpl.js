@@ -85,12 +85,17 @@ mce.define(function (exports) {
 	  	},
 	  	on: function (el,data,value,name) {
 	  		var attrs = name.indexOf(":") != -1 ? name.split(":") : name.split("@")
-	  		  , attr;
+	  		  , attr
+	  		  , event;
 	  		if (attrs.length <= 1) {
 	  			return compileError("mce.tpl.on","for compile error ["+ tplDirectives.on + "]:event on event is error",el);
 	  		}
 	  		event = attrs[1];
-	  		el.addEventListener(event,this.methods[value] && toolFn.isFunction(this.methods[value]) && this.methods[value].bind(this),false);
+	  		if (el.addEventListener) {
+		  		el.addEventListener(event,this.methods[value].bind(this));
+	  		} else {
+	  			el.attachEvent("on" + event,this.methods[value].bind(this))
+	  		}
 	  		el.removeAttribute(name);
 	  	},
 	  	if: function (el,data,value,name) {
@@ -187,7 +192,7 @@ mce.define(function (exports) {
 	  	 config = toolFn.merge(options.config || {},config);
 	  	 this.__compile(this.el,this.data);
 	  	 if (options.renderNode && options.appendNode) {
-	  	 	return compileError("mce.tpl.render","renderNode and appendNode Can't exist at the same time")
+	  	 	return compileError("mce.tpl.render","renderNode and appendNode Cant exist at the same time")
 	  	 }
 	  	 if (options.renderNode) {
 	  	 	 var renderNode = toolFn.isString(options.renderNode) ? document.querySelector(options.renderNode) : options.renderNode;
@@ -277,5 +282,5 @@ mce.define(function (exports) {
 	  	  	  }
 	  	  });
 	  };
-	 return exports('tpl',new Tpl)
+	exports('tpl',new Tpl)
 });

@@ -14,6 +14,8 @@
 		,modules = {
 			tpl: "modules/tpl",
 			request: "modules/request",
+			form: "modules/form",
+			router: "modules/router",
 		}
 		 // 是否为undefined
 		, isUfe = function (ufe) {
@@ -148,14 +150,20 @@
 
 	Mce.prototype.define = function(resolve,deeps,reject) {
 		var deeps = isArray(deeps) ? deeps : [deeps]
-		 ,  self  = this;
-
-		self.use(deeps,function () {
-			resolve.call(self,function (name,module) {
+		 ,  self  = this
+		 ,  load  = function (resolve) {
+		 	var self = this;
+		 	resolve.call(self,function (name,module) {
 				if (!self[name]) {
 					self[name] = module;
 				}
 			});
+		 };
+		if (isFunction(resolve)) {
+			return load.call(self,resolve);
+		}
+		self.use(resolve,function () {
+			load.call(self,deeps);
 		},reject);
 	};
 

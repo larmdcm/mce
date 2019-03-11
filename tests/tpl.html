@@ -8,7 +8,7 @@
 	<div id="app">
 
 	</div>
-	<template id="tpl">
+	<script type="text/template" id="tpl">
 		 	<p>{{ message }} test</p>
 		<p m-text="html"></p>
 		<p m-html="html"></p>
@@ -49,7 +49,7 @@
 		<div m-if="isShow">m-if true 2 {{ message }}</div>
 		<div m-else>m-if false 2 {{ message }}</div>
 		<div m-show="isShow">m-show 显示 {{ message }}</div>
-	</template>
+	</script>
 	<script type="text/javascript" src="../src/mce.js"></script>
 	<script type="text/javascript">
 		mce.use("tpl",function () {

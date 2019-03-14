@@ -10,7 +10,7 @@
 	</div>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
-		mce.use('request',function () {
+		mce.use(['request','tpl'],function () {
 			var request = this.request;
 			console.log(request);
 		});

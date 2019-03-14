@@ -49,6 +49,8 @@
 		<div m-if="isShow">m-if true 2 {{ message }}</div>
 		<div m-else>m-if false 2 {{ message }}</div>
 		<div m-show="isShow">m-show 显示 {{ message }}</div>
+		<div>json format{{ items | json}}</div>
+		<div>计算属性(computed) {{ getMessage }}</div>
 	</script>
 	<script type="text/javascript" src="../src/mce.js"></script>
 	<script type="text/javascript">
@@ -57,7 +59,7 @@
 			   , node = tpl.render({
 			 	el: "#tpl",
 			   	id: "app",
-			 	class: "tpl test",
+			 	className: "tpl test",
 			 	renderNode: "#app",
 			 	config: {
 			 		openTag: "{{",
@@ -86,12 +88,18 @@
 			 	},
 			 	methods: {
 			 		print: function () {
-			 			console.log(this.data.message);
+			 			console.log(this.message);
 			 		}
 			 	},
 			 	filters: {
 			 		toUpper: function (value) {
 			 			return value.toUpperCase();
+			 		}
+			 	},
+			 	computed: {
+			 		getMessage: function () {
+			 			console.log(this);
+			 			return this.message;
 			 		}
 			 	}
 			 });

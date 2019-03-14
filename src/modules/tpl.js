@@ -13,22 +13,33 @@ mce.define(function (exports) {
   	  	 closeTag: "}}"
   	  }
 	  , Tpl = function () {
-	  	  this.version  = VERSION;
-	  	  this.id 		= '';
-	  	  this.class    = '';
-	  	  this.el 		= {};
-	  	  this.data 	= {
+	  	  this.version    = VERSION;
+	  	  this.id 		  = '';
+	  	  this.className  = '';
+	  	  this.el 		  = {};
+	  	  this.data 	  = {
 	  	  	"true": true,
 	  	  	"false": false
 	  	  };
 	  	  this.methods 	= {};
-	  	  this.filters  = {};
+	  	  this.filters  = {
+	  	  	 toUpper: function (value) {
+	  	  	 	return value.toUpperCase();
+	  	  	 },
+	  	  	 toLower: function (value) {
+	  	  	 	return value.toLowerCase();
+	  	  	 },
+	  	  	 json: function (value) {
+	  	  	 	return JSON.stringify(value);
+	  	  	 }
+	  	  };
+	  	  this.computed = {};
 	  }
 	  , tplDirectiveStart = "m-"
 	  , tplDirectives = {
 	  	 text: tplDirectiveStart + "text",
 	  	 html: tplDirectiveStart + "html",
-	  	 for: tplDirectiveStart + "for",
+	  	 forDirective: tplDirectiveStart + "for",
 	  	 bind: tplDirectiveStart + "bind",
 	  	 on: tplDirectiveStart + "on"
 	  }
@@ -48,15 +59,19 @@ mce.define(function (exports) {
 			 	filters = exp.split("|");
 			 	exp = filters.shift();
 			 }
-			 exp = exp.replace(reg,function (a,b,c) {
-			 	return b + "data." + c;
-			 });
-			 result = new Function("data", "'use strict';return " + exp).call(self,data);
+			 if (self.computed[exp.trim()]) {
+			 	result = self.computed[exp.trim()].call(self.__bindDataObject());
+			 } else {
+			 	 exp = exp.replace(reg,function (a,b,c) {
+				 	return b + "data." + c;
+				 });
+				 result = new Function("data", "'use strict';return " + exp).call(self,data);
+			 }
 			 if (filters.length > 0) {
 			 	filters.forEach(function (filter) {
 			 		filter = filter.trim();
 			 		var filterFn = self.filters[filter];
-			 		result = toolFn.isFunction(filterFn) ? filterFn.call(self,result) : 
+			 		result = toolFn.isFunction(filterFn) ? filterFn.call(self.__bindDataObject(),result) : 
 			 				 compileError("mce.tpl.filters",filter + " filter is not a function");
 			 	});
 			 }
@@ -64,15 +79,13 @@ mce.define(function (exports) {
 	  	}
 	  }
 	  , tplDirectiveHandles = {
-	  	html: function (el,data,value,name) {
+	  	htmlHandle: function (el,data,value,name) {
 	  		el.innerHTML = tplUtil.getData.call(this,value,data,el);
-	  		el.removeAttribute(name);
 	  	},
-	  	text: function (el,data,value,name) {
+	  	textHandle: function (el,data,value,name) {
 	  		el.textContent = tplUtil.getData.call(this,value,data,el);
-	  		el.removeAttribute(name);
 	  	},
-	  	bind: function (el,data,value,name) {
+	  	bindHandle: function (el,data,value,name) {
 	  		var attrs = name.split(":")
 	  		  , attr;
 	  		if (attrs.length <= 1) {
@@ -80,10 +93,9 @@ mce.define(function (exports) {
 	  		}
 	  		attr = attrs[1];
 	  		el.setAttribute(attr,tplUtil.getData.call(this,value,data,el));
-	  		el.removeAttribute(name);
 
 	  	},
-	  	on: function (el,data,value,name) {
+	  	onHandle: function (el,data,value,name) {
 	  		var attrs = name.indexOf(":") != -1 ? name.split(":") : name.split("@")
 	  		  , attr
 	  		  , event;
@@ -92,53 +104,58 @@ mce.define(function (exports) {
 	  		}
 	  		event = attrs[1];
 	  		if (el.addEventListener) {
-		  		el.addEventListener(event,this.methods[value].bind(this));
+		  		el.addEventListener(event,this.methods[value].bind(this.__bindDataObject()));
 	  		} else {
-	  			el.attachEvent("on" + event,this.methods[value].bind(this))
+	  			el.attachEvent("on" + event,this.methods[value].bind(this.__bindDataObject()))
 	  		}
-	  		el.removeAttribute(name);
 	  	},
-	  	if: function (el,data,value,name) {
+	  	ifHandle: function (el,data,value,name) {
 	  		var result = tplUtil.getData.call(this,value,data,el)
 	  		  , parent = el.parentNode;
 	  		!result && parent && parent.removeChild(el);
 	  		ifResult.push(result);
-	  		el.removeAttribute(name);
 	  	},
-	  	else: function (el,data,value,name) {
+	  	elseHandle: function (el,data,value,name) {
 	  		var parent = el.parentNode;
 	  		if (ifResult.length <= 0) {
 	  			return compileError("mce.tpl.else","else not a if",el);
 	  		}
 	  		ifResult.shift() && parent && parent.removeChild(el);
-	  		el.removeAttribute(name);
 	  	},
-	  	show: function (el,data,value,name) {
+	  	showHandle: function (el,data,value,name) {
 	  		var result = tplUtil.getData.call(this,value,data,el)
 	  		  , parent = el.parentNode;
 	  		if (!result && parent) {
 	  			el.style.display = 'none';
 	  		}
 	  	},
-	  	for: function (el,data,value) {
+	  	forHandle: function (el,data,value) {
 	  		var self	  = this
 	  		  , fragment  = document.createDocumentFragment()
 	  		  , reg       = /(\((\w+),(\w+)\)|(\w+))\s?in\s?(\w+)/
-	  		  , matchs;
-	  		if (!value.match(reg)) return compileError("mce.tpl.for","for compile error ["+ tplDirectives.for +"=" + '"' + value + '"]',el);
-
+	  		  , matchs
+	  		  , forData;
+	  		if (!value.match(reg)) return compileError("mce.tpl.for","for compile error ["+ tplDirectives.forDirective +"=" + '"' + value + '"]',el);
 	  		matchs = reg.exec(value);
 	  		if (matchs.length >= 6 && matchs[5]) {
-	  			data[matchs[5]].forEach(function (item,index) {
+	  			if (self.computed[matchs[5]]) {
+	  				forData = self.computed[matchs[5]].call(self.__bindDataObject());
+	  			} else {
+	  				forData = data[matchs[5]];
+	  			}
+	  			forData.forEach(function (item,index) {
 	  				var data = {}
 	  				  , node = el.cloneNode(true);
 	  				if (toolFn.isUfe(matchs[4])) {
-	  					data[matchs[3].trim()] = index;
-	  					data[matchs[2].trim()] = item;
+	  					var  k = matchs[3].trim()
+	  					   , v = matchs[2].trim();
+	  					data[k] = index;
+	  					data[v] = item;
 	  				} else {
-	  					data[matchs[1].trim()] = item;
+	  					var v = matchs[1].trim();
+	  					data[v] = item;
 	  				}
-	  				node.removeAttribute(tplDirectives.for);
+	  				node.removeAttribute(tplDirectives.forDirective);
 	  				self.__compile(node,toolFn.merge(data,self.data));
 	  				fragment.appendChild(node);
 	  			});
@@ -174,21 +191,22 @@ mce.define(function (exports) {
 	  	 if (this.id) {
 	  	 	element.id  = this.id;
 	  	 }
-	  	 if (this.class) {
-	  	 	element.className = this.class;
+	  	 if (this.className) {
+	  	 	element.classNameName = this.className;
 	  	 }
 	  	 element.innerHTML = html;
 	  	 return element;
 	  };
 
 	  Tpl.prototype.render = function(options) {
-	  	 this.id      = options.id || this.id;
-	  	 this.class   = options.class || this.class;
-	  	 this.el 	  = options.content ? createElement.call(this,options.content) : createElement.call(this,(toolFn.isString(options.el) 
+	  	 this.id        = options.id || this.id;
+	  	 this.className = options.className || this.className;
+	  	 this.el 	    = options.content ? createElement.call(this,options.content) : createElement.call(this,(toolFn.isString(options.el) 
 	  	 								? document.querySelector(options.el) : options.el).innerHTML);
-	  	 this.data 	  = toolFn.merge(options.data || {},this.data);
-	  	 this.methods = options.methods || {};
-	  	 this.filters = toolFn.merge(options.filters || {},this.filters);
+	  	 this.data 	    = toolFn.merge(options.data || {},this.data);
+	  	 this.methods   = options.methods || {};
+	  	 this.filters   = toolFn.merge(options.filters || {},this.filters);
+	  	 this.computed  = toolFn.merge(options.computed || {},this.computed);
 	  	 config = toolFn.merge(options.config || {},config);
 	  	 this.__compile(this.el,this.data);
 	  	 if (options.renderNode && options.appendNode) {
@@ -217,7 +235,7 @@ mce.define(function (exports) {
 	  	  	self.__compileTextElement(el,data);
 	  	  } else {
 	  	  	self.__compileNodeElement(el,data);
-	  	  	if (el.hasAttribute(tplDirectives.for)) {
+	  	  	if (el.hasAttribute(tplDirectives.forDirective)) {
 	  	  		return;
 	  	  	}
 	  	  	if (el.childNodes && el.childNodes.length > 0) {
@@ -262,9 +280,10 @@ mce.define(function (exports) {
 	  Tpl.prototype.__compileNodeElement = function(el,data) {
 	  	  var self   = this
 	  	     , attrs = el.attributes;
-	  	  if (el.hasAttribute(tplDirectives.for)) {
-	  	  	  var handle = tplDirectives.for.substr(2);
-	  	  	  return tplDirectiveHandles[handle] && tplDirectiveHandles[handle].call(self,el,data,el.getAttribute(tplDirectives.for));
+	  	  if (el.hasAttribute(tplDirectives.forDirective)) {
+	  	  	  var handle = tplDirectives.forDirective.substr(2);
+	  	  	  handle = handle + "Handle";
+	  	  	  return tplDirectiveHandles[handle] && tplDirectiveHandles[handle].call(self,el,data,el.getAttribute(tplDirectives.forDirective));
 	  	  }
 	  	  [].slice.call(attrs).forEach(function (attr) {
 	  	  	  var name = attr.name
@@ -274,13 +293,24 @@ mce.define(function (exports) {
 	  	  	  	 if (handle.indexOf(":") !== -1) {
 	  	  	  	 	handle = handle.split(":")[0];
 	  	  	  	 }
+	  	  	  	 handle = handle + "Handle";
 	  	  	  	 tplDirectiveHandles[handle] && tplDirectiveHandles[handle].call(self,el,data,value,name);
 	  	  	  } else if (isBindDriective(name)) {
-	  	  	  	 tplDirectiveHandles.bind.call(self,el,data,value,name)
+	  	  	  	 tplDirectiveHandles.bindHandle.call(self,el,data,value,name);
 	  	  	  } else if (isEventDirective(name)) {
-	  	  	  	 tplDirectiveHandles.on.call(self,el,data,value,name)
+	  	  	  	 tplDirectiveHandles.onHandle.call(self,el,data,value,name);
 	  	  	  }
+	  	  	  el && el.hasAttribute(name) && el.removeAttribute(name);
 	  	  });
+	  };
+	  Tpl.prototype.__bindDataObject = function () {
+	  	   var dataObject = new (function TplDataObject() {})
+	  	     , attrs = ['data','methods','computed']
+	  	     , self  = this;
+	  	   mce.each(attrs,function (item) {
+	  	   		dataObject = toolFn.merge(toolFn.isObject(self[item]) ? self[item] : {},dataObject);
+	  	   });
+	  	   return dataObject;
 	  };
 	exports('tpl',new Tpl)
 });

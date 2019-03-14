@@ -4,7 +4,7 @@
  * Remark: To write JS code More Succinctly and Efficiently
  */
 
-;(function (win,doc) {
+;(function (win,doc,compatible) {
 	"use strict";
 	var VERSION = '1.0',config = {
 			maxLoadTotal: 1000,
@@ -15,7 +15,7 @@
 			tpl: "modules/tpl",
 			request: "modules/request",
 			form: "modules/form",
-			router: "modules/router",
+			router: "modules/router"
 		}
 		 // 是否为undefined
 		, isUfe = function (ufe) {
@@ -75,7 +75,7 @@
 		  	 return typeof bool == 'boolean';
 		}
 		, getBasePath = function () {
-			var scripts  = [].slice.call(document.scripts).filter(function (script) {
+			var scripts  = arrSlice(document.scripts).filter(function (script) {
 			  	  var src = script.src;
 			  	  return src.indexOf("mce") !== -1;
 			  })
@@ -93,8 +93,12 @@
 			}
 			return oldObj;
 		}
+		, arrSlice = function (object) {
+			return Array.prototype.concat.apply([],object).slice(1);
+		}
 		, Mce = function () {
 			this.version  = VERSION;
+			this.basePath = getBasePath();
 			this.toolFn   = {
 				isObject: isObject,
 				isUfe: isUfe,
@@ -128,7 +132,7 @@
 			  	  		self.setStatus("complete");
 			  	  	}
 				};
-				document.head.appendChild(script);
+				document.getElementsByTagName('head')[0].appendChild(script);
 				return self.setStatus("loading");
 			};
 			return {
@@ -138,6 +142,15 @@
 			}
 	})();
 	
+	Mce.prototype.each = function (items,callback) {
+		var result;
+		for (var i in items) {
+        	 result = callback.call(this,items[i],i,items[i]);
+             if (isBoolean(result) && result === false) break; 
+        }
+        return isUfe(result) ? true : result;
+	};
+
 	Mce.prototype.config = function (configs) {
 		config = merge(configs,config);
 		return this;
@@ -149,9 +162,8 @@
 	};
 
 	Mce.prototype.define = function(resolve,deeps,reject) {
-		var deeps = isArray(deeps) ? deeps : [deeps]
-		 ,  self  = this
-		 ,  load  = function (resolve) {
+		 var self  = this
+		 ,  load   = function (resolve) {
 		 	var self = this;
 		 	resolve.call(self,function (name,module) {
 				if (!self[name]) {
@@ -173,7 +185,8 @@
 		  , apps 	= [];
 		module.forEach(function (module) {
 			if (!self[module] && !isUfe(module) && modules[module]) {
-				var src = getBasePath() + modules[module] + ".js";
+				var src = self.basePath + modules[module] + ".js";
+				getBasePath();
 				apps.push({
 					total: 0,
 					module: Module.create(module,src).load()
@@ -201,5 +214,59 @@
 			},config.pollLoadTime) : resolve.call(self);
 		}(apps,resolve));
 	}
-	win.mce = new Mce();
-})(window,document);
+	compatible(function () {
+		return new Mce();
+	});
+})(window,document,function (factory) {
+	if (!Array.prototype.filter) {
+		 Array.prototype.filter = function(fun) {
+		    "use strict";
+		    if (this === void 0 || this === null)   throw new TypeError();
+
+		    var t = Object(this)
+		     ,  len = t.length >>> 0;
+		    if (typeof fun !== "function")
+		      throw new TypeError();
+
+		    var res = [];
+		    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+		    for (var i = 0; i < len; i++) {
+		      if (i in t) {
+		        var val = t[i];
+		        if (fun.call(thisArg, val, i, t))
+		          res.push(val);
+		      	}
+		    }
+		    return res;
+		 }
+	}
+	if (!Array.prototype.forEach) {
+	    Array.prototype.forEach = function forEach( callback, thisArg ) {
+	        var T, k;
+
+	        if ( this == null ) {
+	            throw new TypeError( "this is null or not defined" );
+	        }
+	        var O = Object(this);
+	        var len = O.length >>> 0;
+	        if ( typeof callback !== "function" ) {
+	            throw new TypeError( callback + " is not a function" );
+	        }
+	        if ( arguments.length > 1 ) {
+	            T = thisArg;
+	        }
+	        k = 0;
+
+	        while( k < len ) {
+	            var kValue;
+	            if ( k in O ) {
+
+	                kValue = O[ k ];
+	                callback.call( T, kValue, k, O );
+	            }
+	            k++;
+	        }
+    	};
+	}
+	window.mce = factory();
+});

@@ -12,6 +12,7 @@ mce.define(function (exports) {
   	  	 openTag: "{{",
   	  	 closeTag: "}}"
   	  }
+  	  , cache = {computed: {}}
 	  , Tpl = function () {
 	  	  this.version    = VERSION;
 	  	  this.id 		  = '';
@@ -59,14 +60,10 @@ mce.define(function (exports) {
 			 	filters = exp.split("|");
 			 	exp = filters.shift();
 			 }
-			 if (self.computed[exp.trim()]) {
-			 	result = self.computed[exp.trim()].call(self.__bindDataObject());
-			 } else {
-			 	 exp = exp.replace(reg,function (a,b,c) {
-				 	return b + "data." + c;
-				 });
-				 result = new Function("data", "'use strict';return " + exp).call(self,data);
-			 }
+			 exp = exp.replace(reg,function (a,b,c) {
+			 	return b + "data." + c;
+			 });
+			 result = new Function("data", "'use strict';return " + exp).call(self,self.__bindComputed(data));
 			 if (filters.length > 0) {
 			 	filters.forEach(function (filter) {
 			 		filter = filter.trim();
@@ -152,7 +149,7 @@ mce.define(function (exports) {
 	  					data[k] = index;
 	  					data[v] = item;
 	  				} else {
-	  					var v = matchs[1].trim();
+	  					var v 	= matchs[1].trim();
 	  					data[v] = item;
 	  				}
 	  				node.removeAttribute(tplDirectives.forDirective);
@@ -188,12 +185,6 @@ mce.define(function (exports) {
 	  }
 	  , createElement = function (html) {
 	  	 var element = document.createElement("div");
-	  	 if (this.id) {
-	  	 	element.id  = this.id;
-	  	 }
-	  	 if (this.className) {
-	  	 	element.classNameName = this.className;
-	  	 }
 	  	 element.innerHTML = html;
 	  	 return element;
 	  };
@@ -211,6 +202,12 @@ mce.define(function (exports) {
 	  	 this.__compile(this.el,this.data);
 	  	 if (options.renderNode && options.appendNode) {
 	  	 	return compileError("mce.tpl.render","renderNode and appendNode Cant exist at the same time")
+	  	 }
+  	  	 if (this.id) {
+	  	 	this.el.id  = this.id;
+	  	 }
+	  	 if (this.className) {
+	  	 	this.el.className = this.className;
 	  	 }
 	  	 if (options.renderNode) {
 	  	 	 var renderNode = toolFn.isString(options.renderNode) ? document.querySelector(options.renderNode) : options.renderNode;
@@ -304,13 +301,26 @@ mce.define(function (exports) {
 	  	  });
 	  };
 	  Tpl.prototype.__bindDataObject = function () {
-	  	   var dataObject = new (function TplDataObject() {})
-	  	     , attrs = ['data','methods','computed']
+	  	   var dataObject = new (function TplDataObject () {})
+	  	     , attrs = ['data','methods']
 	  	     , self  = this;
 	  	   mce.each(attrs,function (item) {
 	  	   		dataObject = toolFn.merge(toolFn.isObject(self[item]) ? self[item] : {},dataObject);
 	  	   });
-	  	   return dataObject;
+	  	   return self.__bindComputed(dataObject);
+	  };
+	  Tpl.prototype.__bindComputed = function (data) {
+	  	  var  dataObject = new (function TplDataObject () {})
+	  	     , self = this;
+	  	  mce.each(self.computed,function (fn,attr) {
+		  	   Object.defineProperty(dataObject,attr,{
+		  	   	  get: function () {
+		  	   	  	if (cache.computed[attr]) return cache.computed[attr];
+		  	   	  	return cache.computed[attr] = fn.call(self.__bindDataObject());
+		  	   	  }
+		  	   });
+	  	   });
+	  	  return toolFn.merge(data,dataObject);
 	  };
 	exports('tpl',new Tpl)
 });

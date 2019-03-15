@@ -50,7 +50,7 @@
 		<div m-else>m-if false 2 {{ message }}</div>
 		<div m-show="isShow">m-show 显示 {{ message }}</div>
 		<div>json format{{ items | json}}</div>
-		<div>计算属性(computed) {{ getMessage }}</div>
+		<div>计算属性(computed) {{ getMessage + getContent }}</div>
 	</script>
 	<script type="text/javascript" src="../src/mce.js"></script>
 	<script type="text/javascript">
@@ -88,7 +88,7 @@
 			 	},
 			 	methods: {
 			 		print: function () {
-			 			console.log(this.message);
+			 			console.log(this.getMessage);
 			 		}
 			 	},
 			 	filters: {
@@ -100,6 +100,9 @@
 			 		getMessage: function () {
 			 			console.log(this);
 			 			return this.message;
+			 		},
+			 		getContent: function () {
+			 			return " World!"
 			 		}
 			 	}
 			 });

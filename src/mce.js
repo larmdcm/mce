@@ -19,7 +19,7 @@
 		}
 		 // 是否为undefined
 		, isUfe = function (ufe) {
-		  	  return typeof ufe == 'undefined' || ufe === undefined;
+		  	return typeof ufe == 'undefined' || ufe === undefined;
 		}
 		// 是否为数组
 		, isArray  = function (array) {
@@ -94,7 +94,14 @@
 			return oldObj;
 		}
 		, arrSlice = function (object) {
-			return Array.prototype.concat.apply([],object).slice(1);
+			return Array.prototype.concat.apply([],object).slice();
+		}
+		, printf = function () {
+			var str = arguments[0];
+			for (var i = 1; i < arguments.length; i++) {
+				str = str.replace(new RegExp('\\{' + (i - 1) +'\\}','g'),arguments[i]);
+			}
+			return str;
 		}
 		, Mce = function () {
 			this.version  = VERSION;
@@ -106,6 +113,7 @@
 				isArray: isArray,
 				isString: isString,
 				isInteger: isInteger,
+				printf: printf,
 				merge: merge,
 				error: error
 			};
@@ -186,7 +194,6 @@
 		module.forEach(function (module) {
 			if (!self[module] && !isUfe(module) && modules[module]) {
 				var src = self.basePath + modules[module] + ".js";
-				getBasePath();
 				apps.push({
 					total: 0,
 					module: Module.create(module,src).load()

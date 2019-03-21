@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>ModuleJs</title>
+</head>
+<body>
+	<div id="app">
+		
+	</div>
+	<script type="text/javascript" src="../src/mce.js"></script>
+	<script type="text/javascript">
+		mce.use(['request','tpl'],function () {
+			var request = this.request;
+			var data = new FormData();
+			data.append("username","mdcm");
+			
+			request.ajax({
+				url: "http://www.api.novel.top/Index/gets",
+				type: "POST",
+				data: data,
+				dataType: "JSON",
+				success: function (response) {
+					console.log(response);
+				}
+			});
+		});
+	</script>
+</body>
+</html>

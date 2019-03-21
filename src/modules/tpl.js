@@ -120,16 +120,15 @@ mce.define(function (exports) {
 	  		ifResult.shift() && parent && parent.removeChild(el);
 	  	},
 	  	showHandle: function (el,data,value,name) {
-	  		var result = tplUtil.getData.call(this,value,data,el)
-	  		  , parent = el.parentNode;
-	  		if (!result && parent) {
+	  		var result = tplUtil.getData.call(this,value,data,el);
+	  		if (!result) {
 	  			el.style.display = 'none';
 	  		}
 	  	},
 	  	forHandle: function (el,data,value) {
 	  		var self	  = this
 	  		  , fragment  = document.createDocumentFragment()
-	  		  , reg       = /(\((\w+),(\w+)\)|(\w+))\s?in\s?(\w+)/
+	  		  , reg       = /(\((\w+),(\w+)\)|(\w+))\s+in\s+(\w+)/
 	  		  , matchs
 	  		  , forData;
 	  		if (!value.match(reg)) return compileError("mce.tpl.for","for compile error ["+ tplDirectives.forDirective +"=" + '"' + value + '"]',el);

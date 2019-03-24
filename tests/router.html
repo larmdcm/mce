@@ -17,13 +17,12 @@
 	</div>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
-		mce.use(['router','view','tpl'],function () {
+		mce.use(['router','tpl'],function () {
 			var router = this.router;
-			router.createView(this.view).route("found",function () {
+			router.route("found",function () {
 				document.querySelector("#content").innerHTML = "404 found";
 			}).redirectFound("/found").before(function (to,next) {
 				console.log("路由回调执行前");
-				console.log(this.historyState);
 				next();
 			}).after(function () {
 				console.log("路由回调执行完毕");
@@ -38,7 +37,21 @@
 					path: "home",
 					callback: function () {
 						document.querySelector("#content").innerHTML = this.query.name;
-					}
+					},
+					children: [
+						{
+							path: "index",
+							callback: function () {
+
+							},
+							children: [
+								{
+									path: "test",
+									callback: function () {}
+								}
+							]
+						}
+					]
 				},
 				{
 					path: "category",

@@ -15,7 +15,8 @@
 			tpl: "modules/tpl",
 			request: "modules/request",
 			form: "modules/form",
-			router: "modules/router"
+			router: "modules/router",
+			view: "modules/view"
 		}
 		 // 是否为undefined
 		, isUfe = function (ufe) {
@@ -46,21 +47,21 @@
 		// 是否为空
 		, isEmpty = function (value) {
 			if (isUfe(value)) {
-				return false;
+				return true;
 			}
 			if (isString(value)) {
-				return value.trim().length > 0;
+				return value.trim().length <= 0;
 			}
 			if (isObject(value)) {
 				for (var key in value) {
-					return true;
+					return false;
 				}
-				return false;
+				return true;
 			}
 			if (isArray(value)) {
-				return value.length > 0;
+				return value.length <= 0;
 			}
-			return true;
+			return false;
 		}
 		// 是否为整数
 		, isInteger = function (integer) {
@@ -113,6 +114,8 @@
 				isArray: isArray,
 				isString: isString,
 				isInteger: isInteger,
+				isEmpty: isEmpty,
+				isNull: isNull,
 				printf: printf,
 				merge: merge,
 				error: error

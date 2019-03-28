@@ -7,15 +7,17 @@
 </head>
 <body>
 	<div id="app">
-		<a href="#/home?name=Home">首页</a>
+		<a href="#/home/Home">首页</a>
 		<a href="#/category?name=Category">分类</a>
 		<a href="#/about?name=About">关于</a>
+		<a href="#/baidu">重定向百度</a>
+		<a href="#/error">重定向hash</a>
 
 		<div id="content" style="margin-top:50px;">
 			
 		</div>
 	</div>
-	<script type="text/javascript" src="./src/mce.js"></script>
+	<script type="text/javascript" src="../src/mce.js"></script>
 	<script type="text/javascript">
 		mce.use(['router','tpl'],function () {
 			var router = this.router;
@@ -34,15 +36,23 @@
 					}
 				},
 				{
-					path: "home",
+					path: "home/:name",
+					validate: {
+						name: {
+							type: Number,
+							handle: function () {
+								
+							}
+						}
+					},
 					callback: function () {
-						document.querySelector("#content").innerHTML = this.query.name;
+						document.querySelector("#content").innerHTML = this.params.name;
 					},
 					children: [
 						{
-							path: "index",
+							path: "index/:id",
 							callback: function () {
-
+								console.log(this.params.id);
 							},
 							children: [
 								{
@@ -64,6 +74,14 @@
 					callback: function () {
 						document.querySelector("#content").innerHTML = this.query.name;
 					}
+				},
+				{
+					path: "baidu",
+					redirect: "http://www.baidu.com"
+				},
+				{
+					path: "error",
+					redirect: "#/found"
 				}
 			]);
 		});

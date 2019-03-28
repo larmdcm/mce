@@ -52,10 +52,7 @@ mce.define(function (exports) {
         if(!toolFn.isObject(data)) {
             return result;
         }
-        for(key in data) {
-            result += window.encodeURIComponent(key) + '=' + window.encodeURIComponent(data[key]) + '&';
-        }
-        return result.slice(0, -1);
+        return toolFn.queryToString(data);
    	  };
    	Request.prototype.ajax = function(options) {
 

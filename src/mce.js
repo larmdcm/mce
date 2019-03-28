@@ -42,7 +42,7 @@
 		}
 		  // 是否为对象
 		, isObject = function (object) {
-		  	 return object != null && typeof object == 'object';
+		  	 return !isNull(object) && typeof object == 'object';
 		}
 		// 是否为空
 		, isEmpty = function (value) {
@@ -83,6 +83,19 @@
 			  , path = scripts.length <= 0 ? "" : scripts[0].src;
 			  return path.substring(0, path.lastIndexOf('/') + 1);
 		}
+		, getGuid = function () {
+			 var S4 = function () {
+	           return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+	         };
+	         return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+		}
+	   , queryToString = function (data) {
+	   	  var queryStr = '';
+	   	  for (var key in data) {
+	   	  	 queryStr += window.encodeURIComponent(key) + '=' + window.encodeURIComponent(data[key]) + '&';
+	   	  }
+	   	  return queryStr.slice(0,-1);
+	   }
 		, error = function (method,message) {
 			 var error = "Mce: " + "[" + method +"] to " + message;
 		  	 throw new Error(error);
@@ -118,6 +131,8 @@
 				isNull: isNull,
 				printf: printf,
 				merge: merge,
+				getGuid: getGuid,
+				queryToString: queryToString,
 				error: error
 			};
 		}
@@ -251,16 +266,16 @@
 		 }
 	}
 	if (!Array.prototype.forEach) {
-	    Array.prototype.forEach = function forEach( callback, thisArg ) {
+	     Array.prototype.forEach = function forEach( callback, thisArg ) {
 	        var T, k;
 
 	        if ( this == null ) {
-	            throw new TypeError( "this is null or not defined" );
+	            throw new TypeError("this is null or not defined");
 	        }
 	        var O = Object(this);
 	        var len = O.length >>> 0;
 	        if ( typeof callback !== "function" ) {
-	            throw new TypeError( callback + " is not a function" );
+	            throw new TypeError(callback + " is not a function");
 	        }
 	        if ( arguments.length > 1 ) {
 	            T = thisArg;
@@ -269,8 +284,7 @@
 
 	        while( k < len ) {
 	            var kValue;
-	            if ( k in O ) {
-
+	            if (k in O) {
 	                kValue = O[ k ];
 	                callback.call( T, kValue, k, O );
 	            }

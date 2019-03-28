@@ -7,20 +7,24 @@
 </head>
 <body>
 	<div id="app">
-		<a href="#/home?name=Home">首页</a>
-		<a href="#/category?name=Category">分类</a>
-		<a href="#/about?name=About">关于</a>
+		<a href="javascript:;" onclick="linkTo('home?name=Home')">首页</a>
+		<a href="javascript:;" onclick="linkTo('category?name=Category')">分类</a>
+		<a href="javascript:;" onclick="linkTo('about?name=Abou')">关于</a>
 
-		<div id="content" style="margin-top:50px;">
-			
+		<div id="router-view" style="margin-top:50px;">
+			<div class=""></div>
 		</div>
 	</div>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
 		mce.use(['router','view','tpl'],function () {
-			var router = this.router;
+			var router = this.router
+			  , printf = this.toolFn.printf;
+			this.view.config({
+				el: "#app"
+			});
 			router.createView(this.view).route("found",function () {
-				document.querySelector("#content").innerHTML = "404 found";
+				document.querySelector("#router-view").innerHTML = "404 found";
 			}).redirectFound("/found").before(function (to,next) {
 				console.log("路由回调执行前");
 				console.log(this.historyState);
@@ -31,25 +35,27 @@
 				{
 					path: "/",
 					callback: function () {
-						document.querySelector("#content").innerHTML = "/";
+						return view({
+							template: printf("<h1>{0}</h1>>",this.query.name)
+						});
 					}
 				},
 				{
 					path: "home",
 					callback: function () {
-						document.querySelector("#content").innerHTML = this.query.name;
+						document.querySelector("#router-view").innerHTML = this.query.name;
 					}
 				},
 				{
 					path: "category",
 					callback: function () {
-						document.querySelector("#content").innerHTML = this.query.name;
+						document.querySelector("#router-view").innerHTML = this.query.name;
 					}
 				},
 				{
 					path: "about",
 					callback: function () {
-						document.querySelector("#content").innerHTML = this.query.name;
+						document.querySelector("#router-view").innerHTML = this.query.name;
 					}
 				}
 			]);

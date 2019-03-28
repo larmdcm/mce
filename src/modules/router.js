@@ -260,6 +260,7 @@ mce.define(function (exports) {
 		 }
 		 if (!toolFn.isUfe(route.callback) && toolFn.isFunction(route.callback)) {
 	 	 	 var result = route.callback.call(this);
+	 	 	 return result;
 	 	 }
 		 self.afterFn && toolFn.isFunction(self.afterFn) && self.afterFn.call(self);
 	}

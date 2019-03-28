@@ -133,6 +133,7 @@
 				merge: merge,
 				getGuid: getGuid,
 				queryToString: queryToString,
+				arrSlice: arrSlice,
 				error: error
 			};
 		}

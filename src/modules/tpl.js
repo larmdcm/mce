@@ -1,7 +1,7 @@
 /**
- *  author: mdcm
+ *  author: larmdcm
  *  date:2019.3.8
- *  remark:js模板引擎
+ *  remark:模板引擎模块
  */
 
 mce.define(function (exports) {

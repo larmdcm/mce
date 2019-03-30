@@ -2,71 +2,62 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
 	<title>ModuleJs</title>
-	<link rel="stylesheet" type="text/css" href="./src/mce.css"/>
+	<style type="text/css">
+		
+	</style>
 </head>
 <body>
-	<div id="app" class="router-view">
-		<div class="router-page">
-			<a href="javascript:;" onclick="linkTo('home/Home')">首页</a>
-			<a href="javascript:;" onclick="linkTo('category/Category')">分类</a>
-			<a href="javascript:;" onclick="linkTo('about/Abou')">关于</a>
-		</div>
+	<div id="app">
+		<form action="" method="">
+			<p>
+				<input class="" type="text" name="name" valid-rules="required|custom:1-2-3">
+			</p>
+		</form>
 	</div>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
-		mce.use(['router','view','tpl'],function () {
-			var router = this.router
-			  , printf = this.toolFn.printf;
-			this.view.config({
-				animation: "slide",
-				pageCurrent: ".page-current",
-				routerPage: ".router-page",
-				routeView: "mce-route-view"
-			});
-			router.createView(this.view).route("found",function () {
-				document.querySelector("#content").innerHTML = "404 found";
-			}).redirectFound("/found").before(function (to,next) {
-				console.log("路由回调执行前");
-				console.log(this.historyState);
-				next();
-			}).after(function () {
-				console.log("路由回调执行完毕");
-			}).dispatch([
+		mce.use('form',function () {
+			var form = this.form;
+			// 自定义验证错误处理
+			form.registerValidErrorHandler([
 				{
-					path: "/",
-					callback: function () {
-						return view({
-							template: printf("<h1>{0}</h1>",this.params.name || "Hello")
-						});
+					// 规则
+					rule: "required",
+					// 处理函数 
+					fn: function (el,rule) {
+						console.log("------自定义验证错误处理------")
+						console.log(el);
+						console.log(rule);
+						console.log("------自定义验证错误处理 End------")
 					}
 				},
+			]);
+			// 自定义验证
+			form.register([
 				{
-					path: "home/:name",
-					callback: function () {
-						return view({
-							template: printf("<h1>{0}</h1>",this.params.name)
-						});
-					}
-				},
-				{
-					path: "category/:name",
-					callback: function () {
-						return view({
-							template: printf("<h1>{0}</h1>",this.params.name)
-						});
-					}
-				},
-				{
-					path: "about/:name",
-					callback: function () {
-						return view({
-							template: printf("<h1>{0}</h1>",this.params.name)
-						});
+					// 规则
+					rule: "custom",
+					// 处理函数
+					fn: function (value,num) {
+						console.log("------自定义验证------")
+						console.log("值:" + value);
+						console.log("参数" + num);
+						
+						return false;
+					},
+					// 如果没有errorFn回调函数 会自行内部错误函数并提示此消息
+					message: "custom错误消息---如果没有errorFn回调函数 会自行内部错误函数并提示此消息",
+					// 错误函数
+					errorFn: function (el,rule) {
+						console.log(el);
+						console.log("错误回调执行了:" + rule)
+						console.log("------自定义验证 End------")
 					}
 				}
 			]);
+			console.log(form.valid(document.forms[0],true));
 		});
 	</script>
 </body>

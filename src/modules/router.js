@@ -1,5 +1,11 @@
+/**
+ *  author: larmdcm
+ *  date:2019.3.27
+ *  remark:路由模块
+ */
 
 mce.define(function (exports) {
+	"use strict";
 	var Router = function () {
 	   	 	this.v       = '1.0';
 	   	 	this.hash 	 = '/';
@@ -95,11 +101,19 @@ mce.define(function (exports) {
 	   	   	  query = this.__parseParams(queryStr);
 	   	   }
 	   	   if (toolFn.isObject(this.view)) {
-	   	   	   query[this.viewKey] = toolFn.getGuid();
+	   	   	   query[this.viewKey] = genKey();
 	   	   }
 	   	   query = toolFn.merge(params,query);
-	   	   location.hash = "#/" + linkUrl + "?" + toolFn.queryToString(query);
-	   };
+	   	   location.hash = "#/" + linkUrl + (toolFn.isEmpty(query) ? "" : "?" + toolFn.queryToString(query));
+	   }
+	   	, genKey = function () {
+	    var t = 'xxxxxxxx';
+	    return t.replace(/[xy]/g, function(c) {
+	        var r = Math.random() * 16 | 0
+	        var v = c === 'x' ? r : (r & 0x3 | 0x8)
+	        return v.toString(16);
+	    });
+	};
 
 	// 初始化操作
 	Router.prototype.init = function () {
@@ -240,7 +254,10 @@ mce.define(function (exports) {
 		 	 if (toolFn.isFunction(self.beforeFn)) {
 		 	 	self.beforeFn.call(self,{
 		 	 		path: self.hash,
-	 	 			query: self.query
+	 	 			query: self.query,
+	 	 			routePath: route.path,
+	 	 			params: self.params,
+	 	 			historyState: self.historyState
 		 	 	},self.__exec.bind(self,route));
 		 	 } else {
 		 	 	self.__exec(route);

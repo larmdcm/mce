@@ -1,5 +1,5 @@
 /**
- * Author: mdcm
+ * Author: larmdcm
  * Data: 2019.3.3
  * Remark: To write JS code More Succinctly and Efficiently
  */

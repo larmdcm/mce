@@ -1,5 +1,11 @@
+/**
+ *  author: larmdcm
+ *  date:2019.3.28
+ *  remark:视图模块
+ */
 
 mce.define(function (exports) {
+	"use strict";
 	var View = function () {
 		this.version = '1.0';
 		window['view'] = view.bind(this);
@@ -12,11 +18,17 @@ mce.define(function (exports) {
 		animation: "slide",
 		pageCurrent: ".page-current",
 		routerPage: ".router-page",
-		routeView: "mce-route-view"
+		routeView: "mce-route-view",
+		cacheView: false,
+		defaultViewExt: "",
+		pageContent: ".router-page-content"
 	}
 	, hasPageCurrentClass = function (className) {
 		var cls = config.pageCurrent.substr(1);
 		return new RegExp(' ' + cls + ' ').test(' ' + className + ' ');
+	}
+	, cache = {
+		views: {}
 	};
 
 	View.prototype.change = function (options) {
@@ -67,17 +79,68 @@ mce.define(function (exports) {
             }, 300);
             routerPage.scrollTop = 0
 		}
+		 var render = function (routerPage,template) {
+			var elemt = document.createElement('div')
+			 , scripts
+			 , scriptAppends = [];
+		 	elemt.innerHTML = template;
+		 	elemt.classList.add(config.routeView);
+		 	scripts = elemt.getElementsByTagName('script');
+		 	if (scripts.length > 0) {
+		 		toolFn.arrSlice(scripts).forEach(function (script) {
+		 			if (script.type && (script.type.indexOf("template") != -1 || script.type.indexOf("Template") != -1)) {
+		 				return false;
+		 			}
+			 		var scriptContent = script.innerHTML;
+			 		elemt.removeChild(script);
+			 		(function (scriptContent) {
+			 			var script = document.createElement('script');
+			 			script.type = 'text/javascript';
+			 			script.innerHTML = scriptContent;
+			 			scriptAppends.push(script);
+			 		})(scriptContent);
+		 		});
+		 	}
+	 		scriptAppends.forEach(function (script) {
+	 			elemt.appendChild(script);
+	 		});
+	 		routerPage.querySelector(config.pageContent).appendChild(elemt);
+		 }
+		 , cacheViewFn = function (viewPath,template) {
+		 	cache.views[viewPath] = template;
+		 };
+		routerPage.querySelector(config.pageContent).innerHTML = "";
 		if (options.template) {
-			var elemt = document.createElement('div');
-			toolFn.arrSlice(routerPage.children).forEach(function (node) {
-				if (node.classList.contains(config.routeView)) {
-					routerPage.removeChild(node);
+			render(routerPage,options.template);
+		} else if (options.view && toolFn.isString(options.view)) {
+			var viewPath = options.view + config.defaultViewExt;
+			if (!toolFn.isUfe(options.cacheView)) {
+				if (cache.views[viewPath]) {
+					return render(routerPage,cache.views[viewPath]);
 				}
+			} else if (config.cacheView) {
+				if (cache.views[viewPath]) {
+					return render(routerPage,cache.views[viewPath]);
+				}
+			}
+			mce.use("request",function () {
+				var request  = this.request;
+				options.data = options.data || {};
+				request.get(viewPath,options.data,function (response) {
+					if (!toolFn.isUfe(options.cacheView)) {
+						cacheViewFn(viewPath,response);
+					} else if (config.cacheView) {
+						cacheViewFn(viewPath,response);
+					}
+					render(routerPage,response);
+				});
 			});
-			elemt.innerHTML = options.template;
-			elemt.classList.add(config.routeView);
-			routerPage.appendChild(elemt);
+		} else if (options.callback) {
+			options.callback.call(this,function (template) {
+				render(routerPage,template);
+			})
 		}
+	
 	};
 
 	View.prototype.config = function (configs) {

@@ -1,0 +1,22 @@
+<div id="category"></div>
+
+<script type="text/template" id="tpl">
+	<h1>
+		{{ name }}
+	</h1>
+</script>
+
+<script type="text/javascript">
+	mce.use("tpl",function () {
+		var tpl = this.tpl;
+
+		tpl.render({
+			el: "#tpl",
+			id: "category",
+			renderNode: "#category",
+			data: {
+				name: "Category"
+			}
+		});
+	});
+</script>

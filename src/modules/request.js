@@ -1,5 +1,5 @@
 /**
- *  author: mdcm
+ *  author: larmdcm
  *  date:2019.3.8
  *  remark:js 异步请求模块
  */
@@ -14,7 +14,7 @@ mce.define(function (exports) {
 	        async: true,           
 	        contentType: "application/x-www-form-urlencoded; charset=UTF-8",   
 	        timeout: null,        
-	        dataType: 'JSON',
+	        dataType: '',
 	        success: function(){},
 	        error: function(){},
 	        complete: function(){},
@@ -33,8 +33,10 @@ mce.define(function (exports) {
         optionsNew.type = optionsNew.type.toUpperCase();
 
         if( optionsNew.type === 'GET' ) {
-            optionsNew.url += '?' + optionsNew.data;
-            optionsNew.data = null;
+            if (!toolFn.isEmpty(optionsNew.data)) {
+                optionsNew.url += '?' + optionsNew.data;
+                optionsNew.data = null;
+            }
         }
 
         return optionsNew;

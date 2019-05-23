@@ -9,7 +9,7 @@
 
 	</div>
 	<script type="text/template" id="tpl">
-	 	<p>{{ message }} test</p>
+	 	<p class="test" id="test" style="display:block;">{{ message }} test</p>
 		<p m-text="html"></p>
 		<p m-html="html"></p>
 		<hr>
@@ -88,7 +88,7 @@
 			 	},
 			 	methods: {
 			 		print: function () {
-			 			return this.message;
+			 			console.log(this.message);
 			 		}
 			 	},
 			 	filters: {
@@ -98,7 +98,6 @@
 			 	},
 			 	computed: {
 			 		getMessage: function () {
-			 			console.log(this.print());
 			 			return this.message;
 			 		},
 			 		getContent: function () {

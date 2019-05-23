@@ -9,7 +9,7 @@ mce.define(function (exports) {
 	var  VERSION = '1.0'
 	   , toolFn  = this.toolFn
 	   , config  = {
-		   	url: location.href,
+		   	  url: location.href,
 	        type: "GET",           
 	        async: true,           
 	        contentType: "application/x-www-form-urlencoded; charset=UTF-8",   
@@ -63,10 +63,16 @@ mce.define(function (exports) {
         optionsNew = processOptions(options);
 
         xhr = new XMLHttpRequest();
-        xhr.open( optionsNew.type, optionsNew.url, optionsNew.async );
+        xhr.open( optionsNew.type, optionsNew.url,optionsNew.async);
 
         if(optionsNew.type === 'POST') {
-            xhr.setRequestHeader('Content-Type', optionsNew.contentType );
+            xhr.setRequestHeader('Content-Type', optionsNew.contentType);
+        }
+        
+        if (optionsNew.header && toolFn.isObject(optionsNew)) {
+            for (var k in optionsNew.header) {
+                 xhr.setRequestHeader(k,optionsNew.header[k]);
+            }
         }
 
         xhr.onreadystatechange = function() {
@@ -76,9 +82,8 @@ mce.define(function (exports) {
                 clearTimeout(timer);
 
                 toolFn.isFunction(optionsNew.complete) && optionsNew.complete();
-
-                if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
-
+                // (xhr.status >= 200 && xhr.status < 300) || xhr.status === 304 || xhr.status === 400
+                if(xhr.status !== 500) {
                     switch ( optionsNew.dataType ) {
                         case 'JSON':
                             result = JSON.parse(xhr.responseText);
@@ -94,7 +99,11 @@ mce.define(function (exports) {
                             document.getElementsByTagName('head')[0].appendChild(style);
                             break;
                         default:
-                            result = xhr.responseText;
+                            if (xhr.getResponseHeader('content-type') && xhr.getResponseHeader('content-type').indexOf("application/json") != -1) {
+                              result = JSON.parse(xhr.responseText);
+                            } else {
+                              result = xhr.responseText;
+                            }
                             break;
                     }
                     toolFn.isFunction(optionsNew.success) && optionsNew.success(result);

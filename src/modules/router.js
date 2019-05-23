@@ -20,6 +20,7 @@ mce.define(function (exports) {
 	   	 	this.redirectFoundUrl = '/';
 	   	 	this.view = null;
 	   	 	this.viewKey = 'viewId';
+ 			window['linkTo'] = linkTo.bind(this);
 	   }
 	   , toolFn  = this.toolFn
 	   , cache   = {}
@@ -47,9 +48,6 @@ mce.define(function (exports) {
 	   	 		path: path,
 	   	 		paramKeys: paramKeys
 	   	 	};
-	   	 },
-	   	 validator: {
-	   	 	
 	   	 },
 	   	 parsePathValues: function (path,route,paramKeys) {
 	   	 	var paths = path.split('/').filter(function (path) { return path != ""; })
@@ -87,6 +85,43 @@ mce.define(function (exports) {
 	   	 	}
 	   	 }
 	   }
+	   , validator = {
+	   	   check: function (params,options) {
+	   	   	 var name    = options.name
+	   	   	   , options = options.options
+	   	   	   , value   = params[name];
+
+	   	   	 if (!value || toolFn.isEmpty(value)) {
+	   	   	 	return options.required;
+	   	   	 }
+	   	   	 if (options.type) {
+	   	   	 	var types  = toolFn.isArray(options.type) ? options.type : [options.type]
+	   	   	 	  , type   = value.constructor
+	   	   	 	  , isType = false;
+
+	   	   	 	for (var i = 0; i < types.length; i++) {
+	   	   	 		if (type === types[i]) {
+	   	   	 			isType = true;
+	   	   	 			break;
+	   	   	 		}
+	   	   	 	}
+	   	   	 	if (!isType) {
+	   	   	 		return false;
+	   	   	 	}
+	   	   	 }
+	   	   	 if (options.regexp && options.regexp.constructor === RegExp) {
+	   	   	 	if (!options.regexp.test(value)) {
+	   	   	 		return false;
+	   	   	 	}
+	   	   	 }	
+	   	   	 if (options.validator && toolFn.isFunction(options.validator)) {
+	   	   	 	 if (!options.validator(value)) {
+	   	   	 	 	return false;
+	   	   	 	 }
+	   	   	 }
+	   	     return true;
+	   	   }
+   	   }
 	   , config  = {
 	   	  defaultExt: '.html',
 	   	  basePath: ''
@@ -96,15 +131,19 @@ mce.define(function (exports) {
 	   	    , linkUrl  = urls[0]
 	   	    , queryStr = urls.length > 1 ? urls[1] : ""
 	   	    , query    = {}
-	   	    , params   = params || {};
+	   	    , params   = params || {}
+	   	    , redirectUrl;
 	   	   if (queryStr.trim().length > 0) {
 	   	   	  query = this.__parseParams(queryStr);
 	   	   }
 	   	   if (toolFn.isObject(this.view)) {
 	   	   	   query[this.viewKey] = genKey();
 	   	   }
-	   	   query = toolFn.merge(params,query);
-	   	   location.hash = "#/" + linkUrl + (toolFn.isEmpty(query) ? "" : "?" + toolFn.queryToString(query));
+	   	   if (params.constructor.name == 'Object') {
+		   	   query = toolFn.merge(params,query);
+	   	   }
+	   	   redirectUrl = "#/" + linkUrl + (toolFn.isEmpty(query) ? "" : "?" + toolFn.queryToString(query));
+	   	   location.hash = redirectUrl;
 	   }
 	   	, genKey = function () {
 	    var t = 'xxxxxxxx';
@@ -121,7 +160,6 @@ mce.define(function (exports) {
 		for (var i in initEvent) {
 			window.addEventListener(initEvent[i],this.__refresh.bind(this),false);
 		}
-		window['linkTo'] = linkTo.bind(this);
 		this.__refresh.call(this);
 		return this;
 	};
@@ -170,12 +208,12 @@ mce.define(function (exports) {
 		return self;
 	};
 	
-	Router.prototype.before = function (callback) {
+	Router.prototype.beforeAction = function (callback) {
 		this.beforeFn = callback;
 		return this;
 	};
 
-	Router.prototype.after = function (callback) {
+	Router.prototype.afterAction = function (callback) {
 		this.afterFn = callback;
 		return this;
 	};
@@ -238,6 +276,8 @@ mce.define(function (exports) {
 		 	 var path = "/" + (route.path.substr(0,1) == '/' ? route.path.substr(1,route.path.length) : route.path)
 		 	  , parsePathResult = {};
 
+		 	  self.hash = self.hash.substr(0,2) == '//' ? self.hash.substr(1,self.hash.length) : self.hash;
+
 		 	 if (route.pathParamKeys.length > 0) {
 		 	 	var pathParamKeys   = route.pathParamKeys;
 		 	 	parsePathResult = pathParse.parsePathValues(self.hash,route,pathParamKeys)
@@ -266,12 +306,25 @@ mce.define(function (exports) {
 		 });
 
 		 if (isFound) {
-		 	location.hash = self.redirectFoundUrl;
+		 	// location.hash = self.redirectFoundUrl;
 		 }
 	};
 
 	Router.prototype.__exec = function (route) {
 		 var self = this;
+		 if (route.verify && toolFn.isObject(route.verify)) {
+	 		var params = toolFn.merge(this.params,this.query)
+	 		  , result = mce.each(route.verify,function (options,name) {
+		 		if (!validator.check(params,{
+		 			name: name,
+		 			options: options
+		 		})) {
+		 			options.errorHandle && options.errorHandle.call(this)
+		 			return false;
+		 		}
+	 		});
+	 		if (!result) return result;
+		 }
 		 if (!toolFn.isUfe(route.redirect)) {
 		 	return route.redirect.indexOf("#") != -1 ? location.hash = route.redirect : location.href = route.redirect;
 		 }
@@ -304,7 +357,7 @@ mce.define(function (exports) {
 		 for (var i in params) {
 		 	 var item  = params[i]
 		 	   , items = item.split('=');
-		 	 items.length > 1 ? query[items[0]] = decodeURI(items[1]) : '';
+		 	 items.length > 1 ? query[items[0]] = decodeURIComponent(items[1]) : '';
 		 }
 		 return query;
 	};

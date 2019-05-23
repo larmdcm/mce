@@ -23,10 +23,10 @@
 			var router = this.router;
 			router.route("found",function () {
 				document.querySelector("#content").innerHTML = "404 found";
-			}).redirectFound("/found").before(function (to,next) {
+			}).redirectFound("/found").beforeAction(function (to,next) {
 				console.log("路由回调执行前");
 				next();
-			}).after(function () {
+			}).afterAction(function () {
 				console.log("路由回调执行完毕");
 			}).dispatch([
 				{
@@ -37,11 +37,16 @@
 				},
 				{
 					path: "home/:name",
-					validate: {
+					verify: {
 						name: {
-							type: Number,
-							handle: function () {
-								
+							type: String,
+							required: true,
+							regexp: /\w+/,
+							validator: function (value) {
+								return value === 'Home';
+							},
+							errorHandle: function () {
+								location.hash = "#/found";
 							}
 						}
 					},

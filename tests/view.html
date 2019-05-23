@@ -7,7 +7,7 @@
 	<link rel="stylesheet" type="text/css" href="../src/mce.css"/>
 </head>
 <body>
-	<div id="app" class="router-page">
+	<div class="router-page">
 		
 		<div class="navbar">
 			<a href="javascript:;" onclick="linkTo('home/Home')">首页</a>
@@ -16,7 +16,6 @@
 		</div>
 		
 		<div class="router-page-content"></div>
-
 		<div class="tabbar">
 			底部
 		</div>
@@ -31,16 +30,18 @@
 				pageCurrent: ".page-current",
 				routerPage: ".router-page",
 				routeView: "mce-route-view",
-				cacheView: true,
+				cacheView: false,
 				pageContent: ".router-page-content"
 			});
 			router.createView(this.view).route("found",function () {
-				document.querySelector("#content").innerHTML = "404 found";
-			}).redirectFound("/found").before(function (to,next) {
+				return view({
+					template: "404 found"
+				});
+			}).redirectFound("/found").beforeAction(function (to,next) {
 				console.log("路由回调执行前");
 				console.log(to);
 				next();
-			}).after(function () {
+			}).afterAction(function () {
 				console.log("路由回调执行完毕");
 			}).dispatch([
 				{
@@ -63,7 +64,7 @@
 					path: "category/:name",
 					callback: function () {
 						return view({
-							view: '/view/category.html',
+							url: '/view/category.html',
 							data: {
 								_: (new Date()).getTime()
 							}

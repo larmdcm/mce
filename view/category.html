@@ -1,21 +1,28 @@
-<div id="category"></div>
+<div class="category"></div>
 
 <script type="text/template" id="tpl">
-	<h1>
+
+	<h1 style="display:block;">
 		{{ name }}
 	</h1>
+	<div class="test">	
+		<a @click="linkTo('/',{})">首页</a>
+	</div>
+
 </script>
 
 <script type="text/javascript">
-	mce.use("tpl",function () {
+	mce.use(["tpl","router","view"],function () {
 		var tpl = this.tpl;
-
 		tpl.render({
 			el: "#tpl",
 			id: "category",
-			renderNode: "#category",
+			renderNode: '.category',
 			data: {
-				name: "Category"
+				name: "Category",
+			},
+			methods: {
+				linkTo: linkTo
 			}
 		});
 	});

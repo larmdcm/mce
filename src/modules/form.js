@@ -12,9 +12,6 @@ mce.define(function (exports) {
 	  	return (function () {
 	  		function Validator () {}
 	  		Validator.prototype = {
-	  			check: function (data) {
-
-	  			},
 	  			register: function (name,fn) {
 	  				var self = this;
 	  				if (arguments.length == 1 && toolFn.isArray(name)) {
@@ -76,11 +73,14 @@ mce.define(function (exports) {
     	      length: '该字段值长度不在指定范围内',
     	      max: '该字段值超出范围',
     	      min: '该字段值小于范围内',
+    	      maxLength: '该字段值长度超出范围',
+    	      minLength: '该字段值长度小于范围内',
     	      email: '邮箱格式错误',
     	      phone: '电话号码格式错误',
     	      idNumber: '身份证号格式错误',
          };
 	  	 this.validErrorFn = {};
+	  	 this.customErrorFn = null;
 	  }
 	  Form.prototype = {
 	  	  valid: function (elemet,batch) {
@@ -88,7 +88,7 @@ mce.define(function (exports) {
 	  	  	  , self   = this
 	  	  	  , batch  = toolFn.isUfe(batch) ? false : batch;
 	  	  	if (!elemet || elemet.toString() !== '[object HTMLFormElement]') {
-	  	  		toolFn.error('mce.form.valid','elemet is not a FormElement');
+	  	  		return toolFn.error('mce.form.valid','elemet is not a FormElement');
 	  	  	}
 		  	for (var i = 0; i < elemet.length; i++) {
 		 	 	  var field  = elemet[i]
@@ -146,9 +146,59 @@ mce.define(function (exports) {
 	  	  },
 	  	  validError: function (el,rule) {
 	  	   	 var message = el.getAttribute('valid-' + rule) || this.rules[rule];
-	  	   	 console.log(message);
+	  	   	 if (this.customErrorFn != null) {
+	  	   	 	return this.customErrorFn.call(this,el,message);
+	  	   	 }
+	  	   	 alert(message);
 	 		 el.focus();
 	 		 return false;
+	  	  },
+	  	  registerCustomError: function (callback) {
+	  	  	 this.customErrorFn = callback;
+	  	  },
+	  	  serialize: function (elemet) {
+	  	  	 var params = this.serializeArray(elemet)
+	  	  	    , str   = "";
+	  	  	  return toolFn.queryToString(params);
+	  	  },
+	  	  serializeArray: function (elemet) {
+	  	  	  var elemet  = elemet || (document.forms.length > 0 ? document.forms[0] : null)
+	  	  	     , params = {};
+  	  	  	  if (!elemet || elemet.toString() !== '[object HTMLFormElement]') {
+	  	  		  return toolFn.error('mce.form.valid','elemet is not a FormElement');
+	  	  	  }
+			  for (var i = 0; i < elemet.length; i ++) {
+					var filed = elemet[i];
+					switch (filed.type) {
+						case undefined : 
+						case 'submit' : 
+						case 'reset' : 
+						case 'file' : 
+						case 'button' : 
+							break;
+						case 'radio' : 
+						case 'checkbox' : 
+							if (!filed.selected) break;
+						case 'select-one' : 
+						case 'select-multiple' :
+							for (var j = 0; j < filed.options.length; j ++) {
+								var option = filed.options[j];
+								if (option.selected) {
+									var optValue = '';
+									if (option.hasAttribute) {
+										optValue = (option.hasAttribute('value') ? option.value : option.text);
+									} else {
+										optValue = (option.attributes('value').specified ? option.value : option.text);
+									}
+									params[filed.name] = optValue; 
+								}
+							}
+							break;
+						default :
+							params[filed.name] = filed.value;
+					}
+			    }
+				return params;
 	  	  }
 	  };
 	exports('form',new Form);

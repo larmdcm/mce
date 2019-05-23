@@ -22,7 +22,9 @@ mce.define(function (exports) {
 	  	  	"true": true,
 	  	  	"false": false
 	  	  };
-	  	  this.methods 	= {};
+	  	  this.methods 	= {
+	  	  	linkTo: toolFn.isFunction(window.linkTo) ? window.linkTo : function () {}
+	  	  };
 	  	  this.filters  = {
 	  	  	 toUpper: function (value) {
 	  	  	 	return value.toUpperCase();
@@ -95,15 +97,39 @@ mce.define(function (exports) {
 	  	onHandle: function (el,data,value,name) {
 	  		var attrs = name.indexOf(":") != -1 ? name.split(":") : name.split("@")
 	  		  , attr
-	  		  , event;
+	  		  , event
+	  		  , regexp = /(\w+)\(+(.*?)\)+/
+	  		  , args   = []
+	  		  , fn
+	  		  , self   = this;
 	  		if (attrs.length <= 1) {
 	  			return compileError("mce.tpl.on","for compile error ["+ tplDirectives.on + "]:event on event is error",el);
 	  		}
 	  		event = attrs[1];
+	  		if (regexp.test(value)) {
+		  		var matchs = value.match(regexp)
+		  		  , argStr = matchs[2];
+		  		value = matchs[1];
+	  			mce.each(argStr.indexOf(',') >= 0 ? argStr.split(',') : [argStr],function (item) {
+	  				if (item.charAt(0) == '{' || item.charAt(0) == '[') {
+	  					item = JSON.parse(item);
+	  				} else if (item.charAt(0) == "'" || item.charAt(0) == '"') {
+	  					item = item.substr(1);
+	  					item = item.substr(0,item.length - 1);
+	  				} else {
+	  					item = tplUtil.getData.call(self,item,self.data);
+	  				}
+	  				args.push(item);
+	  			});
+	  		}
+	  		fn = this.methods[value];
+	  		if (!fn || !toolFn.isFunction(fn)) {
+	  			return compileError("mce.tpl.on",toolFn.printf("{0} is not a function",value))
+	  		}
 	  		if (el.addEventListener) {
-		  		el.addEventListener(event,this.methods[value].bind(this.__bindDataObject()));
+		  		el.addEventListener(event,fn.bind.apply(fn, [this.__bindDataObject()].concat(args)));
 	  		} else {
-	  			el.attachEvent("on" + event,this.methods[value].bind(this.__bindDataObject()))
+	  			el.attachEvent("on" + event,fn.bind.apply(fn, [this.__bindDataObject()].concat(args)));
 	  		}
 	  	},
 	  	ifHandle: function (el,data,value,name) {
@@ -139,7 +165,7 @@ mce.define(function (exports) {
 	  			} else {
 	  				forData = data[matchs[5]];
 	  			}
-	  			forData.forEach(function (item,index) {
+	  			mce.each(forData,function (item,index) {
 	  				var data = {}
 	  				  , node = el.cloneNode(true);
 	  				if (toolFn.isUfe(matchs[4])) {
@@ -194,7 +220,7 @@ mce.define(function (exports) {
 	  	 this.el 	    = options.content ? createElement.call(this,options.content) : createElement.call(this,(toolFn.isString(options.el) 
 	  	 								? document.querySelector(options.el) : options.el).innerHTML);
 	  	 this.data 	    = toolFn.merge(options.data || {},this.data);
-	  	 this.methods   = options.methods || {};
+	  	 this.methods   = toolFn.merge(options.methods || {},this.methods);
 	  	 this.filters   = toolFn.merge(options.filters || {},this.filters);
 	  	 this.computed  = toolFn.merge(options.computed || {},this.computed);
 	  	 config = toolFn.merge(options.config || {},config);
@@ -231,11 +257,11 @@ mce.define(function (exports) {
 	  	  	self.__compileTextElement(el,data);
 	  	  } else {
 	  	  	self.__compileNodeElement(el,data);
-	  	  	if (el.hasAttribute(tplDirectives.forDirective)) {
+	  	  	if (el.hasAttribute && el.hasAttribute(tplDirectives.forDirective)) {
 	  	  		return;
 	  	  	}
 	  	  	if (el.childNodes && el.childNodes.length > 0) {
-	  	  		[].slice.call(el.childNodes).forEach(function (el) {
+	  	  		toolFn.arrSlice(el.childNodes).forEach(function (el) {
 	  	  			self.__compile(el,data);
 	  	  		});
 	  	  	}
@@ -276,12 +302,12 @@ mce.define(function (exports) {
 	  Tpl.prototype.__compileNodeElement = function(el,data) {
 	  	  var self   = this
 	  	     , attrs = el.attributes;
-	  	  if (el.hasAttribute(tplDirectives.forDirective)) {
+	  	  if (el.hasAttribute && el.hasAttribute(tplDirectives.forDirective)) {
 	  	  	  var handle = tplDirectives.forDirective.substr(2);
 	  	  	  handle = handle + "Handle";
 	  	  	  return tplDirectiveHandles[handle] && tplDirectiveHandles[handle].call(self,el,data,el.getAttribute(tplDirectives.forDirective));
 	  	  }
-	  	  [].slice.call(attrs).forEach(function (attr) {
+	  	  toolFn.arrSlice(attrs).forEach(function (attr) {
 	  	  	  var name = attr.name
 	  	  	    , value = attr.value;
 	  	  	  if (isDirective(name)) {
@@ -291,12 +317,14 @@ mce.define(function (exports) {
 	  	  	  	 }
 	  	  	  	 handle = handle + "Handle";
 	  	  	  	 tplDirectiveHandles[handle] && tplDirectiveHandles[handle].call(self,el,data,value,name);
+		  	  	 el && el.hasAttribute(name) && el.removeAttribute(name);
 	  	  	  } else if (isBindDriective(name)) {
 	  	  	  	 tplDirectiveHandles.bindHandle.call(self,el,data,value,name);
+		  	  	 el && el.hasAttribute(name) && el.removeAttribute(name);
 	  	  	  } else if (isEventDirective(name)) {
 	  	  	  	 tplDirectiveHandles.onHandle.call(self,el,data,value,name);
+		  	  	 el && el.hasAttribute(name) && el.removeAttribute(name);
 	  	  	  }
-	  	  	  el && el.hasAttribute(name) && el.removeAttribute(name);
 	  	  });
 	  };
 	  Tpl.prototype.__bindDataObject = function () {

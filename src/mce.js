@@ -97,7 +97,7 @@
 	   	  return queryStr.slice(0,-1);
 	   }
 		, error = function (method,message) {
-			 var error = "Mce: " + "[" + method +"] to " + message;
+			 var error = "Mce: " + "[" + method + "] to " + message;
 		  	 throw new Error(error);
 		}
 		, merge = function (newObj,oldObj) {

@@ -49,7 +49,7 @@ mce.define(function (exports) {
 		 	routerPages[0].parentNode.appendChild(routerPages[0].cloneNode(true));
 		 }
 		 if (!hasPageCurrentClass(pageOneClassName)) {
-		 	routerPage = routerPages[0];
+		 	routerPage = routerPages[0]; 
 		 } else {
 		 	routerPage = routerPages[1];
 		 }
@@ -112,8 +112,8 @@ mce.define(function (exports) {
 		routerPage.querySelector(config.pageContent).innerHTML = "";
 		if (options.template) {
 			render(routerPage,options.template);
-		} else if (options.view && toolFn.isString(options.view)) {
-			var viewPath = options.view + config.defaultViewExt;
+		} else if (options.url && toolFn.isString(options.url)) {
+			var viewPath = options.url + config.defaultViewExt;
 			if (!toolFn.isUfe(options.cacheView)) {
 				if (cache.views[viewPath]) {
 					return render(routerPage,cache.views[viewPath]);

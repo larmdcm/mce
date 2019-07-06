@@ -16,7 +16,8 @@
 			request: "modules/request",
 			form: "modules/form",
 			router: "modules/router",
-			view: "modules/view"
+			view: "modules/view",
+			upload: "modules/upload",
 		}
 		 // 是否为undefined
 		, isUfe = function (ufe) {
@@ -88,6 +89,14 @@
 	           return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
 	         };
 	         return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+		},
+		genKey = function () {
+			var t = 'xxxxxxxx';
+		    return t.replace(/[xy]/g, function(c) {
+		        var r = Math.random() * 16 | 0
+		        var v = c === 'x' ? r : (r & 0x3 | 0x8)
+		        return v.toString(16);
+		    });
 		}
 	   , queryToString = function (data) {
 	   	  var queryStr = '';
@@ -132,6 +141,7 @@
 				printf: printf,
 				merge: merge,
 				getGuid: getGuid,
+				genKey: genKey,
 				queryToString: queryToString,
 				arrSlice: arrSlice,
 				error: error

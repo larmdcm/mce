@@ -3,61 +3,105 @@
 <head>
 	<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
-	<title>表单</title>
+	<title>文件上传</title>
 	<style type="text/css">
 		
 	</style>
 </head>
 <body>
 	<div id="app">
-		<form action="" method="">
-			<p>
-				<input class="" type="text" name="name" valid-rules="required|custom:1-2-3">
-			</p>
-		</form>
+		<div>
+			 <input type="button" value="文件选择" class="mce-upload-start" />
+			 <input type="button" value="开始上传" @click="upload()" />
+			 <input type="button" value="继续" @click="start()" />
+			 <input type="button" value="停止" @click="stop()" />
+		</div>
+		<div>
+			<span>已选择文件: <span id="selectFile"></span></span>
+		</div>
+		<div style="width:500px;height:30px;border:1px solid #000;line-height:30px;text-align:center;">
+			<div style="width:0%;height:30px;background:blue;" id="progressEl">
+				<span id="progressVal">0%</span>
+			</div>
+		</div>
 	</div>
 	<script type="text/javascript" src="./src/mce.js"></script>
 	<script type="text/javascript">
-		mce.use('form',function () {
-			var form = this.form;
-			// 自定义验证错误处理
-			form.registerValidErrorHandler([
-				{
-					// 规则
-					rule: "required",
-					// 处理函数 
-					fn: function (el,rule) {
-						console.log("------自定义验证错误处理------")
-						console.log(el);
-						console.log(rule);
-						console.log("------自定义验证错误处理 End------")
-					}
-				},
-			]);
-			// 自定义验证
-			form.register([
-				{
-					// 规则
-					rule: "custom",
-					// 处理函数
-					fn: function (value,num) {
-						console.log("------自定义验证------")
-						console.log("值:" + value);
-						console.log("参数" + num);
-						
-						return false;
+		mce.use(['upload','tpl'],function () {
+			var upload = this.upload;
+
+			this.tpl.render({
+				el: '#app',
+				renderNode: "#app",
+				id: "app",
+				methods: {
+					upload: function () {
+						file.send();
 					},
-					// 如果没有errorFn回调函数 会自行内部错误函数并提示此消息
-					message: "custom错误消息---如果没有errorFn回调函数 会自行内部错误函数并提示此消息",
-					// 错误函数
-					errorFn: function (el,rule) {
-						console.log(el);
-						console.log("错误回调执行了:" + rule)
-						console.log("------自定义验证 End------")
+					start: function () {
+						file.start();
+					},
+					stop: function () {
+						file.stop();
 					}
 				}
-			]);
-			console.log(form.valid(document.forms[0],true));
+			});
+			window.file = upload.create({
+				url: "http://127.0.0.1:8811/upload.php",
+				auto: false,
+				name: "file",
+				multiple: true,
+				data: {
+					id: mce.toolFn.getGuid(),
+					_: (new Date()).getTime()
+				},
+				validate: {
+					rule: {
+						ext: "zip,psd,jpg",
+						type: "*",
+						size: 0
+					},
+					message: {
+						size: '文件上传大小超出范围',
+						type: '文件上传类型不支持',
+						ext: '文件上传后缀不支持',
+					},
+					error: function (errormsg) {
+						alert(errormsg);
+					}
+				},
+				events: {
+					selectFile: function (files) {
+						var str = '';
+						mce.each(files,function (file) {
+							str += file.name + " ";
+						});
+						document.querySelector("#selectFile").innerHTML = str;
+					},
+					progress: function (progress) {
+						document.querySelector('#progressEl').style.width = progress + "%";
+						document.querySelector('#progressVal').innerHTML = progress + "%";
+						if (progress == 100) {
+							setTimeout(function () {alert('文件已上传完毕');},100);
+						}
+					},
+					success: function (response,status) {
+						console.log("响应数据",response,'http状态',status);
+					}
+				},
+				btns: {
+					start: ".mce-upload-start",
+				},
+				bigDocuments: {
+					start: 0,
+					length: 1024 * 1024 * 1,
+					blobNumName: 'blob_num',
+					totalBolbNumName: 'total_blob_num',
+					fileName: 'file_name'
+				},
+				isBigDocuments: true
+			});
+
 		});
 	</script>
 </body>

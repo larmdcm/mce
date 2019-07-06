@@ -137,22 +137,14 @@ mce.define(function (exports) {
 	   	   	  query = this.__parseParams(queryStr);
 	   	   }
 	   	   if (toolFn.isObject(this.view)) {
-	   	   	   query[this.viewKey] = genKey();
+	   	   	   query[this.viewKey] = toolFn.genKey();
 	   	   }
 	   	   if (params.constructor.name == 'Object') {
 		   	   query = toolFn.merge(params,query);
 	   	   }
 	   	   redirectUrl = "#/" + linkUrl + (toolFn.isEmpty(query) ? "" : "?" + toolFn.queryToString(query));
 	   	   location.hash = redirectUrl;
-	   }
-	   	, genKey = function () {
-	    var t = 'xxxxxxxx';
-	    return t.replace(/[xy]/g, function(c) {
-	        var r = Math.random() * 16 | 0
-	        var v = c === 'x' ? r : (r & 0x3 | 0x8)
-	        return v.toString(16);
-	    });
-	};
+	   };
 
 	// 初始化操作
 	Router.prototype.init = function () {
@@ -306,7 +298,7 @@ mce.define(function (exports) {
 		 });
 
 		 if (isFound) {
-		 	// location.hash = self.redirectFoundUrl;
+		 	location.hash = self.redirectFoundUrl;
 		 }
 	};
 
